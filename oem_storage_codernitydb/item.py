@@ -21,10 +21,8 @@ class ItemCodernityDbStorage(ItemStorage, Plugin):
         return storage
 
     def load(self, collection, media):
-        index_name = '%s_%s_item' % (self.parent.source, self.parent.target)
-
         try:
-            data = self.main.database.get(index_name, self.key, with_doc=True)
+            data = self.main.database.get('item', (self.parent.source, self.parent.target, self.key), with_doc=True)
         except RecordNotFound:
             return None
 

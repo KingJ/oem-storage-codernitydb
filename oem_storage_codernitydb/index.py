@@ -3,6 +3,8 @@ from oem_framework.plugin import Plugin
 from oem_framework.storage import IndexStorage
 from oem_storage_codernitydb.metadata import MetadataCodernityDbStorage
 
+from CodernityDB.database import RecordNotFound
+
 
 class IndexCodernityDbStorage(IndexStorage, Plugin):
     __key__ = 'codernitydb/index'
@@ -20,33 +22,23 @@ class IndexCodernityDbStorage(IndexStorage, Plugin):
         storage.initialize(parent._client)
         return storage
 
-    def initialize(self, client):
-        super(IndexCodernityDbStorage, self).initialize(client)
+    def get(self, index, key):
+        try:
+            item = self.main.database.get('metadata', (self.parent.source, self.parent.target, key), with_doc=True)
+        except RecordNotFound:
+            return None
 
-        self.name = '%s_%s_metadata' % (self.parent.source, self.parent.target)
+        if not item or 'doc' not in item:
+            return None
+
+        return self.parse(index.collection, key, item['doc'])
 
     def load(self, collection):
         index = ModelRegistry['Index'](collection, self)
-
-        for item in self.main.database.all(self.name, with_doc=True):
-            # Retrieve item document
-            doc = item.get('doc')
-
-            if doc is None:
-                continue
-
-            # Retrieve item key
-            key = doc.get('_', {}).get('k')
-
-            if key is None:
-                continue
-
-            # Update index items
-            index.items[key] = doc
-
+        index.items = None
         return index
 
-    def parse_metadata(self, collection, key, value):
+    def parse(self, collection, key, value):
         return ModelRegistry['Metadata'].from_dict(
             collection, value,
             key=str(key),

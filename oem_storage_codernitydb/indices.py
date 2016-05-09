@@ -1,70 +1,84 @@
-from CodernityDB.tree_index import TreeBasedIndex
+from CodernityDB.tree_index import TreeBasedIndex, MultiTreeBasedIndex
 from hashlib import md5
 
 
-class MetadataIndex(TreeBasedIndex):
+class MetadataIndex(MultiTreeBasedIndex):
     _version = 1
 
-    def __init__(self, db_path, name, *args, **kwargs):
-        kwargs['name'] = name
+    custom_header = """from CodernityDB.tree_index import MultiTreeBasedIndex"""
+
+    def __init__(self, *args, **kwargs):
         kwargs['key_format'] = '32s'
+        super(MetadataIndex, self).__init__(*args, **kwargs)
 
-        super(MetadataIndex, self).__init__(db_path, *args, **kwargs)
-
-        fragments = name.split('_')
-
-        if len(fragments) != 3:
-            raise ValueError('Invalid index name: %r' % name)
-
-        self.source = fragments[0]
-        self.target = fragments[1]
-
-    def make_key(self, key):
-        return md5(str(key)).hexdigest()
+    def make_key(self, (source, target, key)):
+        return md5(' '.join([str(source), str(target), str(key)])).hexdigest()
 
     def make_key_value(self, data):
         attributes = data.get('_', {})
+        collection = attributes.get('c', {})
+
+        if attributes.get('t') != 'metadata' or not attributes.get('k'):
+            return
+
+        if not collection.get('s') or not collection.get('t'):
+            return
+
+        return self.make_key((
+            collection['s'],
+            collection['t'],
+            attributes['k']
+        )), None
+
+
+class MetadataCollectionIndex(TreeBasedIndex):
+    _version = 1
+
+    def __init__(self, *args, **kwargs):
+        kwargs['key_format'] = '32s'
+        super(MetadataCollectionIndex, self).__init__(*args, **kwargs)
+
+    def make_key(self, (source, target)):
+        return md5(' '.join([str(source), str(target)])).hexdigest()
+
+    def make_key_value(self, data):
+        attributes = data.get('_', {})
+        collection = attributes.get('c', {})
 
         if attributes.get('t') != 'metadata':
             return
 
-        collection = attributes.get('c', {})
-
-        if collection.get('s') != self.source or collection.get('t') != self.target:
+        if not collection.get('s') or not collection.get('t'):
             return
 
-        return md5(str(attributes.get('k'))).hexdigest(), None
+        return self.make_key((
+            collection['s'],
+            collection['t']
+        )), None
 
 
 class ItemIndex(TreeBasedIndex):
     _version = 1
 
-    def __init__(self, db_path, name, *args, **kwargs):
-        kwargs['name'] = name
+    def __init__(self, *args, **kwargs):
         kwargs['key_format'] = '32s'
+        super(ItemIndex, self).__init__(*args, **kwargs)
 
-        super(ItemIndex, self).__init__(db_path, *args, **kwargs)
-
-        fragments = name.split('_')
-
-        if len(fragments) != 3:
-            raise ValueError('Invalid index name: %r' % name)
-
-        self.source = fragments[0]
-        self.target = fragments[1]
-
-    def make_key(self, key):
-        return md5(str(key)).hexdigest()
+    def make_key(self, (source, target, key)):
+        return md5(' '.join([str(source), str(target), str(key)])).hexdigest()
 
     def make_key_value(self, data):
         attributes = data.get('_', {})
-
-        if attributes.get('t') != 'item':
-            return
-
         collection = attributes.get('c', {})
 
-        if collection.get('s') != self.source or collection.get('t') != self.target:
+        if attributes.get('t') != 'item' or not attributes.get('k'):
             return
 
-        return md5(str(attributes.get('k'))).hexdigest(), None
+        if not collection.get('s') or not collection.get('t'):
+            return
+
+        return self.make_key((
+            collection['s'],
+            collection['t'],
+            attributes['k']
+        )), None

@@ -1,6 +1,6 @@
 from oem_framework.models.core import ModelRegistry
 from oem_storage_codernitydb.database import DatabaseCodernityDbStorage
-from oem_storage_codernitydb.indices import MetadataIndex, ItemIndex
+from oem_storage_codernitydb.indices import MetadataIndex, MetadataCollectionIndex, ItemIndex
 from oem_framework.storage import ProviderStorage
 from oem_framework.plugin import Plugin
 
@@ -34,16 +34,9 @@ class CodernityDbStorage(ProviderStorage, Plugin):
         self.database.create()
 
         # Add indices
-        self.database.add_index(MetadataIndex(self.path, 'anidb_imdb_metadata'))
-        self.database.add_index(ItemIndex(self.path,     'anidb_imdb_item'))
-        self.database.add_index(MetadataIndex(self.path, 'anidb_tvdb_metadata'))
-        self.database.add_index(ItemIndex(self.path,     'anidb_tvdb_item'))
-
-        self.database.add_index(MetadataIndex(self.path, 'imdb_anidb_metadata'))
-        self.database.add_index(ItemIndex(self.path,     'imdb_anidb_item'))
-
-        self.database.add_index(MetadataIndex(self.path, 'tvdb_anidb_metadata'))
-        self.database.add_index(ItemIndex(self.path,     'tvdb_anidb_item'))
+        self.database.add_index(MetadataIndex(self.database.path,           'metadata'))
+        self.database.add_index(MetadataCollectionIndex(self.database.path, 'metadata_collection'))
+        self.database.add_index(ItemIndex(self.database.path,               'item'))
 
         return True
 
@@ -59,7 +52,7 @@ class CodernityDbStorage(ProviderStorage, Plugin):
 
     def has_index(self, source, target, version):
         return len(list(
-            self.database.all('%s_%s_metadata' % (source, target), limit=1)
+            self.database.get_many('metadata_collection', (source, target), limit=1)
         )) > 0
 
     def update_index(self, source, target, version, response):
@@ -81,7 +74,8 @@ class CodernityDbStorage(ProviderStorage, Plugin):
             self.database.insert(item)
 
         # Update index
-        self.database.reindex_index('%s_%s_metadata' % (source, target))
+        self.database.reindex_index('metadata')
+        self.database.reindex_index('metadata_collection')
         return True
 
     #
@@ -90,7 +84,7 @@ class CodernityDbStorage(ProviderStorage, Plugin):
 
     def has_item(self, source, target, version, key):
         try:
-            self.database.get('%s_%s_item' % (source, target), key)
+            self.database.get('item', (source, target, key))
             return True
         except RecordNotFound:
             pass
