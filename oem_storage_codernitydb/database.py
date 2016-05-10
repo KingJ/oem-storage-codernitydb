@@ -7,11 +7,10 @@ from oem_storage_codernitydb.collection import CollectionCodernityDbStorage
 class DatabaseCodernityDbStorage(DatabaseStorage, Plugin):
     __key__ = 'codernitydb/database'
 
-    def __init__(self, parent, source, target, version=None, database=None):
+    def __init__(self, parent, source, target, database=None):
         self.parent = parent
         self.source = source
         self.target = target
-        self.version = version
 
         self.database = database
 
@@ -22,8 +21,8 @@ class DatabaseCodernityDbStorage(DatabaseStorage, Plugin):
             self.database = self.parent.database
 
     @classmethod
-    def open(cls, parent, source, target, version=None, database=None):
-        storage = cls(parent, source, target, version, database)
+    def open(cls, parent, source, target, database=None):
+        storage = cls(parent, source, target, database)
         storage.initialize(parent._client)
         return storage
 

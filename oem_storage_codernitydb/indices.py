@@ -2,14 +2,39 @@ from CodernityDB.tree_index import TreeBasedIndex, MultiTreeBasedIndex
 from hashlib import md5
 
 
-class MetadataIndex(MultiTreeBasedIndex):
+class CollectionKeyIndex(TreeBasedIndex):
+    _version = 1
+
+    def __init__(self, *args, **kwargs):
+        kwargs['key_format'] = '32s'
+        super(CollectionKeyIndex, self).__init__(*args, **kwargs)
+
+    def make_key(self, (source, target)):
+        return md5(' '.join([str(source), str(target)])).hexdigest()
+
+    def make_key_value(self, data):
+        attributes = data.get('_', {})
+        collection = attributes.get('c', {})
+
+        if attributes.get('t') != 'collection':
+            return
+
+        if not collection.get('s') or not collection.get('t'):
+            return
+
+        return self.make_key((
+            collection['s'],
+            collection['t']
+        )), None
+
+class MetadataKeyIndex(MultiTreeBasedIndex):
     _version = 1
 
     custom_header = """from CodernityDB.tree_index import MultiTreeBasedIndex"""
 
     def __init__(self, *args, **kwargs):
         kwargs['key_format'] = '32s'
-        super(MetadataIndex, self).__init__(*args, **kwargs)
+        super(MetadataKeyIndex, self).__init__(*args, **kwargs)
 
     def make_key(self, (source, target, key)):
         return md5(' '.join([str(source), str(target), str(key)])).hexdigest()
@@ -57,12 +82,12 @@ class MetadataCollectionIndex(TreeBasedIndex):
         )), None
 
 
-class ItemIndex(TreeBasedIndex):
+class ItemKeyIndex(TreeBasedIndex):
     _version = 1
 
     def __init__(self, *args, **kwargs):
         kwargs['key_format'] = '32s'
-        super(ItemIndex, self).__init__(*args, **kwargs)
+        super(ItemKeyIndex, self).__init__(*args, **kwargs)
 
     def make_key(self, (source, target, key)):
         return md5(' '.join([str(source), str(target), str(key)])).hexdigest()

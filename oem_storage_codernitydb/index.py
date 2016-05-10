@@ -24,7 +24,7 @@ class IndexCodernityDbStorage(IndexStorage, Plugin):
 
     def get(self, index, key):
         try:
-            item = self.main.database.get('metadata', (self.parent.source, self.parent.target, key), with_doc=True)
+            item = self.main.database.get('metadata_key', (self.parent.source, self.parent.target, key), with_doc=True)
         except RecordNotFound:
             return None
 
@@ -39,6 +39,21 @@ class IndexCodernityDbStorage(IndexStorage, Plugin):
         return index
 
     def parse(self, collection, key, value):
+        attributes = value.get('_', {})
+
+        if attributes.get('e'):
+            # Decode metadata
+            value = self.format.decode(
+                ModelRegistry['Metadata'], value,
+                ignore_keys=['_', '_id', '_rev']
+            )
+
+            # Remove "e" (encoded) attribute
+            del value['_']['e']
+
+            # Update item in database
+            self.main.database.update(value)
+
         return ModelRegistry['Metadata'].from_dict(
             collection, value,
             key=str(key),
