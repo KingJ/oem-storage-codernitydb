@@ -8,6 +8,8 @@ class CollectionCodernityDbStorage(CollectionStorage, Plugin):
     __key__ = 'codernitydb/collection'
 
     def __init__(self, parent, source, target, version=None):
+        super(CollectionCodernityDbStorage, self).__init__()
+
         self.parent = parent
         self.source = source
         self.target = target

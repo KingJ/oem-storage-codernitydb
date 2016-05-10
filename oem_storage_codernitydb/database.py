@@ -8,6 +8,8 @@ class DatabaseCodernityDbStorage(DatabaseStorage, Plugin):
     __key__ = 'codernitydb/database'
 
     def __init__(self, parent, source, target, database=None):
+        super(DatabaseCodernityDbStorage, self).__init__()
+
         self.parent = parent
         self.source = source
         self.target = target
