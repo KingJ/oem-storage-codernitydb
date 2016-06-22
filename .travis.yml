@@ -1,0 +1,19 @@
+language: python
+python:
+- '2.7'
+install:
+- pip install -U setuptools
+script: true
+after_success: python setup.py sdist bdist_wheel
+deploy:
+  provider: releases
+  api_key:
+    secure: J7OoNx3T9pZxyjvDxWbg5uQZnvjXDngXv0+lt3lZD4UJPoAJzm/jGDjz5roo+ZUSzShEdPJvPnnDK9w5BeyyZox5GfIwsLYQTIlszFs+8tNy9ExdT9xS4s0nRVEHve5fHxoGtqeYF/ZUsoqR09V4h27G0d8Cg+U3K4PLpNrxviFtmOEA25J5eCl3khFywsX1sQsQnejCnVY1jelSX14F92KLeNQJT7wOvuLw/E8TJt3Tt9EAS4HGca1ad2JSJS0W7unU77i26hlNA3DbFakZF9IajY+qcnhUtPwjzC/4GVzsYwYlj9Eq7WxgiWT3WoIOy4zSBg1eMSCOZz13M1OVMxXNB+8uHWazeVHMP7Dy/adQJZfQJDabrNLNKlrCX+ZD5N77fZaQ5P0/U4vV0fNIwpyhktAHFxqQoKTTrzRK1i0dMGTZCG6XrUISycrCYMrM205Oa9yeEWViFazbNm2wbSUUAqhdKolrrSvLS8iQxUaYc55p4VWd94GmKM1B7kAdNjBRp8m8PlvRasfvmuqlIVidsCcBS0r+J20rJuAV2DQZnf5wjNuvDl4vzQH8hgapJ7SP/tEITmlKZDVF4kcJ2Hruhh5JQbLcnUDdcyA/yZk+mmCnElKOF3qbef7pW5FdwAe7DU1H1wYp1XnmUskK5WFdZKW0aRiiZUjp+sFUwR8=
+  skip_cleanup: true
+  file_glob: true
+  file:
+  - "dist/oem-storage-codernitydb-*"
+  - "dist/oem_storage_codernitydb-*"
+  on:
+    repo: OpenEntityMap/oem-storage-codernitydb
+    tags: true
